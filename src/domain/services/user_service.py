@@ -2,14 +2,15 @@ from typing import List, Optional
 from src.domain.entities.user import User
 from src.domain.repositories.user_repository import UserRepository
 from src.infrastructure.security import get_password_hash, verify_password
+from src.adapters.secondary.persistence.models.user_model import User
 
 class UserService:
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
 
-    def create_user(self, username: str, email: str, password: str, full_name: str) -> User:
+    def create_user(self, username: str, email: str, password: str, full_name: str, role: str = 'user') -> User:
         hashed_password = get_password_hash(password)
-        user = User(id=None, username=username, email=email, hashed_password=hashed_password, full_name=full_name)
+        user = User(id=None, username=username, email=email, hashed_password=hashed_password, full_name=full_name, role=role)
         return self.user_repository.save(user)
 
     def get_user_by_id(self, user_id: int) -> Optional[User]:
@@ -33,3 +34,5 @@ class UserService:
 
     def verify_user_password(self, user: User, password: str) -> bool:
         return verify_password(password, user.hashed_password) 
+    
+
