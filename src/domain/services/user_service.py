@@ -1,5 +1,5 @@
 from typing import List, Optional
-from src.domain.entities.user import User
+# from src.domain.entities.user import User
 from src.domain.repositories.user_repository import UserRepository
 from src.infrastructure.security import get_password_hash, verify_password
 from src.adapters.secondary.persistence.models.user_model import User

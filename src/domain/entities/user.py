@@ -9,6 +9,7 @@ class User:
     email: str
     hashed_password: str
     full_name: str
+    role: str = "user"  # Agregar el atributo role
     is_active: bool = True
     created_at: datetime = datetime.now()
     updated_at: datetime = datetime.now()
@@ -17,4 +18,4 @@ class User:
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        self.updated_at = datetime.now() 
+        self.updated_at = datetime.now()
