@@ -42,7 +42,7 @@ def login():
 def admin_dashboard():
     return jsonify({
         'message': 'Bienvenido a la pagina de administracion',
-        'admin_tools': ['Manage Users', 'View Logs', 'Manage Settings']
+        'admin_tools': ['Administrar usuarios', 'Ver registros', 'Administrar configuraciones']
     }), 200
 
     
