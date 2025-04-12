@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from src.adapters.secondary.external.face_recognition.face_recognit import DlibFaceRecognitionAdapter
 from src.application.services.auth_service import AuthService
 from src.domain.services.user_service import UserService
 from src.adapters.secondary.persistence.repositories.user_repository import UserRepository
@@ -6,7 +7,7 @@ from src.infrastructure.security import role_required
 from src.adapters.secondary.persistence.models.user_model import User
 
 auth_blueprint = Blueprint('auth', __name__)
-
+face_recognizer = DlibFaceRecognitionAdapter()
 # Inicializar servicios
 user_repository = UserRepository()
 user_service = UserService(user_repository)
@@ -51,3 +52,17 @@ def logout():
     
     return jsonify({'message': 'tu ya no tienes acceso '}), 200
 
+@auth_blueprint.route("/auth/register_face", methods=["POST"])
+def register_face():
+    user_id = request.form["user_id"]
+    image = request.files["image"].read()  # Imagen como bytes
+    success = face_recognizer.register_face(user_id, image)
+    return {"success": success}, 200 if success else 400
+
+@auth_blueprint.route("/auth/authenticate_face", methods=["POST"])
+def authenticate_face():
+    image = request.files["image"].read()
+    user_id = face_recognizer.authenticate_face(image)
+    if user_id:
+        return {"user_id": user_id}, 200
+    return {"error": "No match found"}, 401

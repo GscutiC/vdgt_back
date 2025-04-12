@@ -6,7 +6,7 @@ from src.adapters.primary.http.routes.auth_routes import auth_routes
 from src.infrastructure.config import DEBUG
 from src.infrastructure.database import engine
 from src.infrastructure.database_base import Base
-from src.adapters.secondary.persistence.models.user_model import User  # Importar el modelo
+from src.adapters.secondary.persistence.models.user_model import User  
 
 app = Flask(__name__)
 
