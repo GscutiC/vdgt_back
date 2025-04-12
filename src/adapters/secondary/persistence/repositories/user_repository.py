@@ -11,7 +11,8 @@ class UserRepository:
             email=user.email,
             hashed_password=user.hashed_password,
             full_name=user.full_name,
-            is_active=user.is_active
+            is_active=user.is_active,
+            role=user.role  
         )
         db.add(user_model)
         db.commit()
@@ -28,7 +29,8 @@ class UserRepository:
                 email=user_model.email,
                 hashed_password=user_model.hashed_password,
                 full_name=user_model.full_name,
-                is_active=user_model.is_active
+                is_active=user_model.is_active,
+                role=user_model.role 
             )
         return None
 
@@ -42,7 +44,8 @@ class UserRepository:
                 email=user_model.email,
                 hashed_password=user_model.hashed_password,
                 full_name=user_model.full_name,
-                is_active=user_model.is_active
+                is_active=user_model.is_active,
+                role=user_model.role
             )
         return None
 
@@ -56,7 +59,8 @@ class UserRepository:
                 email=user_model.email,
                 hashed_password=user_model.hashed_password,
                 full_name=user_model.full_name,
-                is_active=user_model.is_active
+                is_active=user_model.is_active,
+                role=user_model.role 
             )
             for user_model in user_models
         ]
@@ -70,6 +74,7 @@ class UserRepository:
             user_model.hashed_password = user.hashed_password
             user_model.full_name = user.full_name
             user_model.is_active = user.is_active
+            user_model.role = user.role 
             db.commit()
             db.refresh(user_model)
         return user
