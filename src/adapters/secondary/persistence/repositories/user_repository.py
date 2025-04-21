@@ -2,7 +2,7 @@ from typing import List, Optional
 from src.domain.entities.user import User
 from src.adapters.secondary.persistence.models.user_model import User as UserModel
 from src.infrastructure.database import get_db
-
+from src.infrastructure.database import session_factory
 class UserRepository:
     def save(self, user: User) -> User:
         db = next(get_db())
@@ -18,6 +18,35 @@ class UserRepository:
         db.commit()
         db.refresh(user_model)
         return user
+
+    def create_user(self, username, email, password, full_name, role="user"):
+        print(f"Creando usuario: {username}, {email}, {full_name}")
+        
+        user = User(
+            username=username,
+            email=email,
+            password=self.hash_password(password),
+            full_name=full_name,
+            role=role
+        )
+        
+        print(f"Objeto user creado: {user.__dict__}")
+        
+        session = session_factory()
+        try:
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            print(f"Usuario guardado en DB. ID generado: {user.id}, tipo: {type(user.id)}")
+            return user
+        except Exception as e:
+            session.rollback()
+            print(f"Error al crear usuario: {e}")
+            import traceback
+            print(traceback.format_exc())
+            raise
+        finally:
+            session.close()
 
     def get_by_id(self, user_id: int) -> Optional[User]:
         db = next(get_db())
