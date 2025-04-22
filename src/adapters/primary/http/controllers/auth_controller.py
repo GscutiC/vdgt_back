@@ -13,6 +13,7 @@ user_repository = UserRepository()
 user_service = UserService(user_repository)
 auth_service = AuthService(user_service)
 
+# Ruta para registrar un usuario
 @auth_blueprint.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -27,13 +28,75 @@ def register():
         return jsonify({'message': 'User registered successfully'}), 201
     return jsonify({'error': 'User registration failed'}), 400
 
+# Ruta para obtener un usuario por su ID
+@auth_blueprint.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = user_repository.get_by_id(user_id)
+    if user:
+        return jsonify({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'full_name': user.full_name,
+            'role': user.role
+        }), 200
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+
+# Ruta para actualizar la información de un usuario
+@auth_blueprint.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.get_json()
+    user = user_repository.update_user(
+        user_id,
+        username=data.get('username'),
+        email=data.get('email'),
+        password=data.get('password'),
+        full_name=data.get('full_name'),
+        role=data.get('role')
+    )
+    if user:
+        return jsonify({'message': 'Usuario actualizado exitosamente'}), 200
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+
+# Ruta para eliminar un usuario
+@auth_blueprint.route('/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    success = user_repository.delete_user(user_id)
+    if success:
+        return jsonify({'message': 'Usuario eliminado exitosamente'}), 200
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+
+# Ruta para listar todos los usuarios
+@auth_blueprint.route('/users', methods=['GET'])
+@role_required('admin')  # Aseguramos que solo los administradores puedan ver todos los usuarios
+def list_users():
+    users = user_repository.list_all_users()
+    users_data = [{
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'full_name': user.full_name,
+        'role': user.role
+    } for user in users]
+    return jsonify(users_data), 200
+
+
 @auth_blueprint.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     user = auth_service.authenticate_user(data['email'], data['password'])
     if user:
         access_token = auth_service.create_access_token_for_user(user)
-        return jsonify({'access_token': access_token}), 200
+        return jsonify({
+            'access_token': access_token,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'full_name': user.full_name,
+                'role': user.role
+            }
+        }), 200
     return jsonify({'error': 'Invalid credentials'}), 401 
 
 

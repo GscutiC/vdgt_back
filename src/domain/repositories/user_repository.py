@@ -1,6 +1,7 @@
 from typing import List, Optional
 from src.adapters.secondary.persistence.models.user_model import User
 from src.infrastructure.database import session_factory
+from src.adapters.secondary.persistence.models.facial_embeding_model import FacialEmbedding
 import bcrypt
 
 class UserRepository:
@@ -13,7 +14,7 @@ class UserRepository:
         hashed = bcrypt.hashpw(password_bytes, salt)
         return hashed.decode('utf-8')
 
-    def create_user(self, username, email, password, full_name, role="user"):
+    def create_user(self, username: str, email: str, password: str, full_name: str, role: str = "user") -> User:
         # Primero hash la contraseña
         hashed_password = self.hash_password(password)
         
@@ -62,3 +63,64 @@ class UserRepository:
             session.close()
 
     # ... otros métodos
+
+    def update_user(self, user_id: int, username: Optional[str] = None, email: Optional[str] = None,
+                    password: Optional[str] = None, full_name: Optional[str] = None, role: Optional[str] = None) -> Optional[User]:
+        # Actualizar información de un usuario
+        session = session_factory()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if user:
+                if username:
+                    user.username = username
+                if email:
+                    user.email = email
+                if password:
+                    user.password = password
+                if full_name:
+                    user.full_name = full_name
+                if role:
+                    user.role = role
+                session.commit()
+                session.refresh(user)
+                return user
+            return None
+        except Exception as e:
+            session.rollback()
+            print(f"Error al actualizar usuario: {e}")
+            raise
+        finally:
+            session.close()
+
+    
+
+    def list_all_users(self) -> List[User]:
+        # Obtener todos los usuarios
+        session = session_factory()
+        try:
+            return session.query(User).all()
+        finally:
+            session.close()
+
+    
+    def delete_user(self, user_id: int) -> bool:
+        session = session_factory()
+        try:
+        # Eliminar registros en la tabla facial_embeddings relacionados con el usuario
+           facial_embeddings = session.query(FacialEmbedding).filter(FacialEmbedding.user_id == user_id).all()
+           for embedding in facial_embeddings:
+               session.delete(embedding)
+        
+          # Luego, eliminar el usuario
+           user = session.query(User).filter(User.id == user_id).first()
+           if user:
+            session.delete(user)
+            session.commit()
+            return True
+           return False
+        except Exception as e:
+          session.rollback()
+          print(f"Error al eliminar usuario: {e}")
+          raise
+        finally:
+          session.close()
