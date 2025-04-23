@@ -14,8 +14,10 @@ DATABASE_URL = f'postgresql+psycopg2://{db_user}:{db_password}@{db_url}/{db_name
 print(DATABASE_URL)
 
 engine = create_engine(DATABASE_URL)
-session_local = sessionmaker(bind=engine)
+session_local = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
+def session_factory():
+    return session_local()
 def get_db():
     db = session_local()
     try:
