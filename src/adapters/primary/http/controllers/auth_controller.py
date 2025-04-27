@@ -13,20 +13,22 @@ user_repository = UserRepository()
 user_service = UserService(user_repository)
 auth_service = AuthService(user_service)
 
-# Ruta para registrar un usuario
 @auth_blueprint.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    user = user_service.create_user(
-        username=data['username'],
-        email=data['email'],
-        password=data['password'],
-        full_name=data['full_name'],
-        role=data.get('role', 'user')
-    )
-    if user:
-        return jsonify({'message': 'User registered successfully'}), 201
-    return jsonify({'error': 'User registration failed'}), 400
+    try:
+        user = user_service.create_user(
+            username=data['username'],
+            email=data['email'],
+            password=data['password'],
+            full_name=data['full_name'],
+            role=data.get('role', 'user')
+        )
+        if user:
+            return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    return jsonify({'error': 'Error al registrar el usuario'}), 400
 
 # Ruta para obtener un usuario por su ID
 @auth_blueprint.route('/user/<int:user_id>', methods=['GET'])

@@ -15,6 +15,12 @@ class UserRepository:
         return hashed.decode('utf-8')
 
     def create_user(self, username: str, email: str, password: str, full_name: str, role: str = "user") -> User:
+        
+         # Verificar si el correo electrónico ya está en la base de datos
+        existing_user = self.get_by_email(email)
+        if existing_user:
+            raise ValueError("El correo electrónico ya está registrado.") 
+        
         # Primero hash la contraseña
         hashed_password = self.hash_password(password)
         
