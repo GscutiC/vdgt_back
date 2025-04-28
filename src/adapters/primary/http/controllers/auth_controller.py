@@ -5,6 +5,7 @@ from src.domain.services.user_service import UserService
 from src.domain.repositories.user_repository import UserRepository
 from src.infrastructure.security import role_required
 from src.adapters.secondary.persistence.models.user_model import User
+from src.infrastructure.security import create_password_reset_token, verify_jwt
 
 auth_blueprint = Blueprint('auth', __name__)
 face_recognizer = DlibFaceRecognitionAdapter()
@@ -238,3 +239,47 @@ def login_face():
         error_trace = traceback.format_exc()
         print(f"ERROR EN LOGIN FACIAL: {str(e)}\n{error_trace}")
         return jsonify({'error': f'Error en login facial: {str(e)}'}), 500
+    
+@auth_blueprint.route('/password-reset', methods=['POST'])
+def password_reset_request():
+    data = request.get_json()
+    email = data.get('email')
+    
+    user = auth_service.get_user_by_email(email)  # Obtener usuario por correo
+    
+    if user:
+        # Crear un token de recuperación de contraseña
+        reset_token = create_password_reset_token({'sub': user.id})
+        
+        # Enviar el token por correo electrónico (simularemos el proceso)
+        # Aquí agregarías el código para enviar el correo con el enlace
+        
+        return jsonify({
+            "message": "Se ha enviado un enlace para restablecer tu contraseña al correo proporcionado.",
+            "reset_token": reset_token 
+        }), 200
+    
+    return jsonify({'error': 'Correo no registrado'}), 400
+
+@auth_blueprint.route('/password-reset/<token>', methods=['POST'])
+def password_reset(token):
+    data = request.get_json()
+    new_password = data.get('new_password')
+    
+    # Verificar el token JWT
+    user_data = verify_jwt(token)
+    if 'error' in user_data:
+        return jsonify(user_data), 401  # Token inválido o expirado
+    
+    user_id = user_data['sub']
+    
+    # Buscar al usuario
+    user = auth_service.get_user_by_id(user_id)
+    if user:
+        # Actualizar la contraseña del usuario
+        hashed_password = auth_service.hash_password(new_password)
+        user.password = hashed_password
+        user_repository.update(user)
+        return jsonify({'message': 'Contraseña actualizada con éxito'}), 200
+    
+    return jsonify({'error': 'Usuario no encontrado'}), 404

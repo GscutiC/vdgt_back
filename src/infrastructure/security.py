@@ -4,7 +4,8 @@ from passlib.context import CryptContext
 from src.infrastructure.config import SECRET_KEY
 from functools import wraps
 from flask import request, jsonify
-
+# from flask_mail import Message
+# from flask import current_app
 # Configuración de la seguridad
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
@@ -78,3 +79,17 @@ def role_required(required_role):
 
         return wrapper
     return decorator
+
+# Función para generar un token de recuperación de contraseña
+def create_password_reset_token(data: dict, expires_delta: timedelta = timedelta(minutes=15)):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({'exp': expire})
+    
+    # Asegúrate de que el campo 'sub' sea una cadena
+    if 'sub' in to_encode and not isinstance(to_encode['sub'], str):
+        to_encode['sub'] = str(to_encode['sub'])
+    
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm='HS256')
+    return encoded_jwt
+
