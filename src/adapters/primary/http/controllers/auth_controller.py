@@ -6,6 +6,7 @@ from src.domain.repositories.user_repository import UserRepository
 from src.infrastructure.security import role_required
 from src.adapters.secondary.persistence.models.user_model import User
 from src.infrastructure.security import create_password_reset_token, verify_jwt
+from src.application.services.email_service import send_email
 
 auth_blueprint = Blueprint('auth', __name__)
 face_recognizer = DlibFaceRecognitionAdapter()
@@ -253,6 +254,13 @@ def password_reset_request():
         
         # Enviar el token por correo electrónico (simularemos el proceso)
         # Aquí agregarías el código para enviar el correo con el enlace
+
+        # Enviar el token por correo electrónico
+        send_email(
+             user.email,
+             'Recuperación de Contraseña',
+             f'Para restablecer tu contraseña, haz clic en este enlace: http://localhost:3000/password-reset/{reset_token}'
+        )
         
         return jsonify({
             "message": "Se ha enviado un enlace para restablecer tu contraseña al correo proporcionado.",

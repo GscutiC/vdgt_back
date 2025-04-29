@@ -11,3 +11,4 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key')
 
 # Otras configuraciones
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} 
+
