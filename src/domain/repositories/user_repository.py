@@ -98,18 +98,13 @@ class UserRepository:
         finally:
             session.close()
             
-    def update(self, user: User) -> User:
+    def update_password(self, user: User) -> User:
         session = session_factory()
         try:
             user_model = session.query(User).filter(User.id == user.id).first()
             if user_model:
                # Actualiza los campos de usuario
-               user_model.username = user.username
-               user_model.email = user.email
                user_model.password = user.password
-               user_model.full_name = user.full_name
-               user_model.is_active = user.is_active
-               user_model.role = user.role
                session.commit()
                session.refresh(user_model)
                return user

@@ -287,7 +287,7 @@ def password_reset(token):
         # Actualizar la contraseña del usuario
         hashed_password = auth_service.hash_password(new_password)
         user.password = hashed_password
-        user_repository.update(user)
+        user_repository.update_password(user)
         return jsonify({'message': 'Contraseña actualizada con éxito'}), 200
     
     return jsonify({'error': 'Usuario no encontrado'}), 404
