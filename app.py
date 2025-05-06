@@ -10,7 +10,16 @@ from src.infrastructure.database import engine
 from src.infrastructure.database_base import Base
 from src.adapters.secondary.persistence.models.user_model import User  
 from src.adapters.secondary.persistence.models.facial_embeding_model import FacialEmbedding
+from flask_mail import Mail
+from src.infrastructure.config import load_dotenv, Config
+
+# Cargar variables de entorno desde un archivo .env
+load_dotenv()
+
 app = Flask(__name__)
+
+# Cargar las configuraciones desde la clase Config
+app.config.from_object(Config)
 
 CORS(app, resources={
     r"/*": {
@@ -20,6 +29,10 @@ CORS(app, resources={
         
         },  # Permitir todas las solicitudes de origen cruzado
 })
+
+# Inicializa Flask-Mail
+mail = Mail(app)
+
 # Registrar blueprints
 app.register_blueprint(auth_routes)
 

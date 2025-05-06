@@ -8,7 +8,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)  # Asegúrate de que 'email' sea único
     password = Column(String)
     full_name = Column(String)
     is_active = Column(Boolean, default=True)
@@ -16,6 +16,8 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     facial_embeddings = relationship("FacialEmbedding", back_populates="user")
+     
+
 
   
     

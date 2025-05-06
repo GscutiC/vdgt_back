@@ -41,7 +41,7 @@ class UserService:
             user.update(**kwargs)
             return self.user_repository.update(user)
         return None
-
+    
     def delete_user(self, user_id: int) -> bool:
         return self.user_repository.delete(user_id)
 

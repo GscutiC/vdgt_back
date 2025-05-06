@@ -5,6 +5,8 @@ from src.domain.services.user_service import UserService
 from src.domain.repositories.user_repository import UserRepository
 from src.infrastructure.security import role_required
 from src.adapters.secondary.persistence.models.user_model import User
+from src.infrastructure.security import create_password_reset_token, verify_jwt
+from src.application.services.email_service import send_email
 
 auth_blueprint = Blueprint('auth', __name__)
 face_recognizer = DlibFaceRecognitionAdapter()
@@ -16,16 +18,72 @@ auth_service = AuthService(user_service)
 @auth_blueprint.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    user = user_service.create_user(
-        username=data['username'],
-        email=data['email'],
-        password=data['password'],
-        full_name=data['full_name'],
-        role=data.get('role', 'user')
+    try:
+        user = user_service.create_user(
+            username=data['username'],
+            email=data['email'],
+            password=data['password'],
+            full_name=data['full_name'],
+            role=data.get('role', 'user')
+        )
+        if user:
+            return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    return jsonify({'error': 'Error al registrar el usuario'}), 400
+
+# Ruta para obtener un usuario por su ID
+@auth_blueprint.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = user_repository.get_by_id(user_id)
+    if user:
+        return jsonify({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'full_name': user.full_name,
+            'role': user.role
+        }), 200
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+
+# Ruta para actualizar la información de un usuario
+@auth_blueprint.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.get_json()
+    user = user_repository.update_user(
+        user_id,
+        username=data.get('username'),
+        email=data.get('email'),
+        password=data.get('password'),
+        full_name=data.get('full_name'),
+        role=data.get('role')
     )
     if user:
-        return jsonify({'message': 'User registered successfully'}), 201
-    return jsonify({'error': 'User registration failed'}), 400
+        return jsonify({'message': 'Usuario actualizado exitosamente'}), 200
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+
+# Ruta para eliminar un usuario
+@auth_blueprint.route('/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    success = user_repository.delete_user(user_id)
+    if success:
+        return jsonify({'message': 'Usuario eliminado exitosamente'}), 200
+    return jsonify({'error': 'Usuario no encontrado'}), 404
+
+# Ruta para listar todos los usuarios
+@auth_blueprint.route('/users', methods=['GET'])
+@role_required('admin')  # Aseguramos que solo los administradores puedan ver todos los usuarios
+def list_users():
+    users = user_repository.list_all_users()
+    users_data = [{
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'full_name': user.full_name,
+        'role': user.role
+    } for user in users]
+    return jsonify(users_data), 200
+
 
 @auth_blueprint.route('/login', methods=['POST'])
 def login():
@@ -33,7 +91,16 @@ def login():
     user = auth_service.authenticate_user(data['email'], data['password'])
     if user:
         access_token = auth_service.create_access_token_for_user(user)
-        return jsonify({'access_token': access_token}), 200
+        return jsonify({
+            'access_token': access_token,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'full_name': user.full_name,
+                'role': user.role
+            }
+        }), 200
     return jsonify({'error': 'Invalid credentials'}), 401 
 
 
@@ -173,3 +240,54 @@ def login_face():
         error_trace = traceback.format_exc()
         print(f"ERROR EN LOGIN FACIAL: {str(e)}\n{error_trace}")
         return jsonify({'error': f'Error en login facial: {str(e)}'}), 500
+    
+@auth_blueprint.route('/password-reset', methods=['POST'])
+def password_reset_request():
+    data = request.get_json()
+    email = data.get('email')
+    
+    user = auth_service.get_user_by_email(email)  # Obtener usuario por correo
+    
+    if user:
+        # Crear un token de recuperación de contraseña
+        reset_token = create_password_reset_token({'sub': user.id})
+        
+        # Enviar el token por correo electrónico (simularemos el proceso)
+        # Aquí agregarías el código para enviar el correo con el enlace
+
+        # Enviar el token por correo electrónico
+        send_email(
+             user.email,
+             'Recuperación de Contraseña',
+             f'Para restablecer tu contraseña, haz clic en este enlace: http://localhost:3000/password-reset/{reset_token}'
+        )
+        
+        return jsonify({
+            "message": "Se ha enviado un enlace para restablecer tu contraseña al correo proporcionado.",
+            "reset_token": reset_token 
+        }), 200
+    
+    return jsonify({'error': 'Correo no registrado'}), 400
+
+@auth_blueprint.route('/password-reset/<token>', methods=['POST'])
+def password_reset(token):
+    data = request.get_json()
+    new_password = data.get('new_password')
+    
+    # Verificar el token JWT
+    user_data = verify_jwt(token)
+    if 'error' in user_data:
+        return jsonify(user_data), 401  # Token inválido o expirado
+    
+    user_id = user_data['sub']
+    
+    # Buscar al usuario
+    user = auth_service.get_user_by_id(user_id)
+    if user:
+        # Actualizar la contraseña del usuario
+        hashed_password = auth_service.hash_password(new_password)
+        user.password = hashed_password
+        user_repository.update_password(user)
+        return jsonify({'message': 'Contraseña actualizada con éxito'}), 200
+    
+    return jsonify({'error': 'Usuario no encontrado'}), 404
