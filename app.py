@@ -10,6 +10,10 @@ from src.infrastructure.database import engine
 from src.infrastructure.database_base import Base
 from src.adapters.secondary.persistence.models.user_model import User  
 from src.adapters.secondary.persistence.models.facial_embeding_model import FacialEmbedding
+from src.adapters.secondary.persistence.models.proyecto_modelo import Proyecto
+from src.adapters.secondary.persistence.models.cotizacion_modelo import Cotizacion
+from src.adapters.secondary.persistence.models.material_modelo import Material
+
 from flask_mail import Mail
 from src.infrastructure.config import load_dotenv, Config
 
