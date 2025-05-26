@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from dotenv import load_dotenv
 import os
 
@@ -15,6 +15,7 @@ print(DATABASE_URL)
 
 engine = create_engine(DATABASE_URL)
 session_local = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+db_session = scoped_session(session_local)
 
 def session_factory():
     return session_local()
