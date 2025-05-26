@@ -32,49 +32,70 @@ def crear_proyecto():
         db_session.rollback()
         return jsonify({"error": str(e)}), 400
 
+
 @proyecto_blueprint.route('/proyectos/<int:proyecto_id>/materiales', methods=['GET'])
-def calcular_materiales(proyecto_id):
+def obtener_materiales(proyecto_id):
     proyecto = db_session.query(Proyecto).get(proyecto_id)
     if not proyecto:
         return jsonify({"error": "Proyecto no encontrado"}), 404
 
-    calculador = CalculadoraMateriales(proyecto)
-    detalles_vidrio, detalles_aluminio = calculador.calcular()
+    try:
+        calculadora = CalculadoraMateriales(db_session, proyecto)
+        calculadora.calcular()
 
-    optimizador = OptimizadorCortes(detalles_aluminio)
-    cortes = optimizador.optimizar()
+        vidrios = db_session.query(VidrioDetalle).filter_by(proyecto_id=proyecto.id).all()
+        aluminios = db_session.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
 
-    return jsonify({
-        "vidrio": [
-            {
-                "descripcion": v.descripcion,
-                "ancho": v.ancho,
-                "alto": v.alto,
-                "area": round(v.area, 2),
-                "cantidad": v.cantidad
-            } for v in detalles_vidrio
-        ],
-        "aluminio": [
-            {
-                "codigo": a.codigo,
-                "descripcion": a.descripcion,
-                "longitud": a.longitud,
-                "cantidad": a.cantidad
-            } for a in detalles_aluminio
-        ],
-        "optimizacion": cortes  # Lista de cortes por barra
-    })
+        resultado_vidrios = [{
+            "descripcion": v.descripcion,
+            "ancho": v.ancho,
+            "alto": v.alto,
+            "cantidad": v.cantidad,
+            "area": v.area
+        } for v in vidrios]
+
+        resultado_aluminios = [{
+            "codigo": a.codigo,
+            "descripcion": a.descripcion,
+            "longitud": a.longitud,
+            "cantidad": a.cantidad
+        } for a in aluminios]
+
+        return jsonify({
+            "vidrios": resultado_vidrios,
+            "aluminios": resultado_aluminios
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@proyecto_blueprint.route('/proyectos/<int:proyecto_id>/optimizacion', methods=['GET'])
+def obtener_optimizacion(proyecto_id):
+    proyecto = db_session.query(Proyecto).get(proyecto_id)
+    if not proyecto:
+        return jsonify({"error": "Proyecto no encontrado"}), 404
+
+    try:
+        aluminios = db_session.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
+        optimizador = OptimizadorCortes(aluminios)
+        cortes = optimizador.optimizar()
+
+        return jsonify({"optimizacion_cortes": cortes})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @proyecto_blueprint.route('/proyectos/<int:proyecto_id>/cotizacion', methods=['GET'])
-def generar_cotizacion(proyecto_id):
+def obtener_cotizacion(proyecto_id):
     proyecto = db_session.query(Proyecto).get(proyecto_id)
     if not proyecto:
         return jsonify({"error": "Proyecto no encontrado"}), 404
 
-    calculador = CalculadoraMateriales(proyecto)
-    vidrios, aluminios = calculador.calcular()
+    try:
+        vidrios = db_session.query(VidrioDetalle).filter_by(proyecto_id=proyecto.id).all()
+        aluminios = db_session.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
 
-    generador = GeneradorCotizacion(vidrios, aluminios)
-    cotizacion = generador.generar()
+        generador = GeneradorCotizacion(vidrios, aluminios)
+        cotizacion = generador.generar()
 
-    return jsonify(cotizacion)
+        return jsonify(cotizacion)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
