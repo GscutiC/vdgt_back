@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify, request
 from src.adapters.secondary.persistence.models.proyecto_model import Proyecto
 from src.adapters.secondary.persistence.models.vidrio_model import VidrioDetalle
 from src.adapters.secondary.persistence.models.aluminio_model import AluminioDetalle
+from src.adapters.secondary.persistence.models.optimizacion_model import CorteOptimizado
+from src.adapters.secondary.persistence.models.cotizacion_model import Cotizacion 
 from src.application.services.calculo_materiales import CalculadoraMateriales
 from src.application.services.optimizacion_cortes import OptimizadorCortes
 from src.application.services.generar_cotizacion import GeneradorCotizacion
@@ -32,70 +34,93 @@ def crear_proyecto():
         db_session.rollback()
         return jsonify({"error": str(e)}), 400
 
-
 @proyecto_blueprint.route('/proyectos/<int:proyecto_id>/materiales', methods=['GET'])
 def obtener_materiales(proyecto_id):
-    proyecto = db_session.query(Proyecto).get(proyecto_id)
+    db = db_session()
+    proyecto = db.query(Proyecto).get(proyecto_id)
+
     if not proyecto:
         return jsonify({"error": "Proyecto no encontrado"}), 404
 
-    try:
-        calculadora = CalculadoraMateriales(db_session, proyecto)
-        calculadora.calcular()
+    calculadora = CalculadoraMateriales(db, proyecto)
+    vidrios, aluminios = calculadora.calcular()
 
-        vidrios = db_session.query(VidrioDetalle).filter_by(proyecto_id=proyecto.id).all()
-        aluminios = db_session.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
-
-        resultado_vidrios = [{
+    return jsonify({
+        "vidrios": [{
+            "id": v.id,
+            "proyecto_id": v.proyecto_id,
             "descripcion": v.descripcion,
             "ancho": v.ancho,
             "alto": v.alto,
             "cantidad": v.cantidad,
             "area": v.area
-        } for v in vidrios]
-
-        resultado_aluminios = [{
+        } for v in vidrios],
+        "aluminios": [{
+            "id": a.id,
+            "proyecto_id": a.proyecto_id,
             "codigo": a.codigo,
             "descripcion": a.descripcion,
             "longitud": a.longitud,
             "cantidad": a.cantidad
         } for a in aluminios]
+    })
 
-        return jsonify({
-            "vidrios": resultado_vidrios,
-            "aluminios": resultado_aluminios
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
 
 @proyecto_blueprint.route('/proyectos/<int:proyecto_id>/optimizacion', methods=['GET'])
 def obtener_optimizacion(proyecto_id):
-    proyecto = db_session.query(Proyecto).get(proyecto_id)
+    db = db_session()
+    proyecto = db.query(Proyecto).get(proyecto_id)
     if not proyecto:
         return jsonify({"error": "Proyecto no encontrado"}), 404
 
     try:
-        aluminios = db_session.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
+        aluminios = db.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
         optimizador = OptimizadorCortes(aluminios)
         cortes = optimizador.optimizar()
 
+        # Guardar la optimización en base de datos
+        import json
+        optimizacion_json = json.dumps(cortes)
+
+        optimizacion_db = CorteOptimizado(
+            proyecto_id=proyecto.id,
+            descripcion=f"Optimización cortes proyecto {proyecto.id}",
+            datos=optimizacion_json
+        )
+        db.add(optimizacion_db)
+        db.commit()
+
         return jsonify({"optimizacion_cortes": cortes})
     except Exception as e:
+        db.rollback()
         return jsonify({"error": str(e)}), 500
 
 @proyecto_blueprint.route('/proyectos/<int:proyecto_id>/cotizacion', methods=['GET'])
 def obtener_cotizacion(proyecto_id):
-    proyecto = db_session.query(Proyecto).get(proyecto_id)
+    db = db_session()
+    proyecto = db.query(Proyecto).get(proyecto_id)
     if not proyecto:
         return jsonify({"error": "Proyecto no encontrado"}), 404
 
     try:
-        vidrios = db_session.query(VidrioDetalle).filter_by(proyecto_id=proyecto.id).all()
-        aluminios = db_session.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
+        vidrios = db.query(VidrioDetalle).filter_by(proyecto_id=proyecto.id).all()
+        aluminios = db.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).all()
 
         generador = GeneradorCotizacion(vidrios, aluminios)
         cotizacion = generador.generar()
 
+        # Guardar cotización en la base de datos
+        cotizacion_db = Cotizacion(
+            proyecto_id=proyecto.id,
+            subtotal=cotizacion["subtotal"],
+            iva=cotizacion["iva"],
+            total=cotizacion["total"]
+        )
+        db.add(cotizacion_db)
+        db.commit()
+
         return jsonify(cotizacion)
     except Exception as e:
+        db.rollback()
         return jsonify({"error": str(e)}), 500
