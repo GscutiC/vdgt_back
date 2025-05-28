@@ -13,3 +13,15 @@ class VidrioDetalle(Base):
     cantidad = Column(Integer)
     area = Column(Float)
     proyecto = relationship("Proyecto", backref="vidrios")
+
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "proyecto_id": self.proyecto_id,
+            "descripcion": self.descripcion,
+            "ancho": self.ancho,
+            "alto": self.alto,
+            "cantidad": self.cantidad,
+            "area": self.area
+        }

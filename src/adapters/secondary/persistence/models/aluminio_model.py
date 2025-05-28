@@ -12,3 +12,13 @@ class AluminioDetalle(Base):
     longitud = Column(Float)
     cantidad = Column(Integer)
     proyecto = relationship("Proyecto", backref="aluminios")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "proyecto_id": self.proyecto_id,
+            "codigo": self.codigo,
+            "descripcion": self.descripcion,
+            "longitud": self.longitud,
+            "cantidad": self.cantidad
+        }

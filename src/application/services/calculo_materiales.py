@@ -51,9 +51,7 @@ class CalculadoraMateriales:
             cantidad=self.unidades * 2
         )
 
-        self.db.add(vidrio)
-        self.db.add(aluminio)
-        self.db.commit()
+        
         return [vidrio], [aluminio]
 
     def _ventana_pegable(self):
@@ -74,9 +72,7 @@ class CalculadoraMateriales:
             cantidad=self.unidades * 2
         )
 
-        self.db.add(vidrio)
-        self.db.add(aluminio)
-        self.db.commit()
+      
         return [vidrio], [aluminio]
 
     def _puerta_batiente(self):
@@ -97,10 +93,8 @@ class CalculadoraMateriales:
             cantidad=self.unidades * 3
         )
 
-        self.db.add(vidrio)
-        self.db.add(aluminio)
-        self.db.commit()
-        return [vidrio], [aluminio]
+       
+        return [vidrio],[aluminio]
 
     def _fijo(self):
         vidrio = VidrioDetalle(
@@ -120,9 +114,7 @@ class CalculadoraMateriales:
             cantidad=self.unidades * 2
         )
 
-        self.db.add(vidrio)
-        self.db.add(aluminio)
-        self.db.commit()
-        return [vidrio], [aluminio]
+       
+        return [vidrio],[aluminio]
 
   
