@@ -5,6 +5,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.
 from flask import Flask
 from flask_cors import CORS
 from src.adapters.primary.http.routes.auth_routes import auth_routes
+from src.adapters.primary.http.routes.face_route import face_routes
+from src.adapters.primary.http.routes.password_route import password_routes
+from src.adapters.primary.http.routes.proyecto_routes import proyecto_routes
+from src.adapters.primary.http.routes.usuarios_routes import usuarios_routes
 from src.infrastructure.config import DEBUG
 from src.infrastructure.database import engine
 from src.infrastructure.database_base import Base
@@ -42,6 +46,10 @@ mail = Mail(app)
 
 # Registrar blueprints
 app.register_blueprint(auth_routes)
+app.register_blueprint(face_routes)
+app.register_blueprint(password_routes)
+app.register_blueprint(proyecto_routes)
+app.register_blueprint(usuarios_routes)
 
 with engine.connect() as connection:
     connection.execute(sqlalchemy.text("Create extension if not exists vector;"))

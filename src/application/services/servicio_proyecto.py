@@ -18,6 +18,11 @@ class ServicioProyecto:
         return calculadora.calcular()
 
     def guardar_materiales(self, proyecto):
+        # eliminar materiales previos
+        self.db.query(VidrioDetalle).filter_by(proyecto_id=proyecto.id).delete()
+        self.db.query(AluminioDetalle).filter_by(proyecto_id=proyecto.id).delete()
+        self.db.commit()  # para aplicar borrado
+
         vidrios, aluminios = self.calcular_materiales(proyecto)
         self.db.add_all(vidrios + aluminios)
         self.db.commit()
@@ -29,7 +34,11 @@ class ServicioProyecto:
         return optimizador.optimizar()
 
     def guardar_optimizacion(self, proyecto):
+        # eliminar optimizacion previos
         datos = self.calcular_optimizacion(proyecto)
+        self.db.query(CorteOptimizado).filter_by(proyecto_id=proyecto.id).delete()
+        self.db.commit() # para aplicar borrado
+
         optimizacion_db = CorteOptimizado(
             proyecto_id=proyecto.id,
             descripcion=f"Optimización cortes proyecto {proyecto.id}",
@@ -46,6 +55,10 @@ class ServicioProyecto:
         return generador.generar()
 
     def guardar_cotizacion(self, proyecto):
+        # eliminar cotizacion previa
+        self.db.query(Cotizacion).filter_by(proyecto_id=proyecto.id).delete()
+        self.db.commit() # para aplicar borrado
+
         cotizacion = self.calcular_cotizacion(proyecto)
         cotizacion_db = Cotizacion(
             proyecto_id=proyecto.id,
