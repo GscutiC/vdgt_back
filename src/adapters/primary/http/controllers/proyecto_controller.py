@@ -8,6 +8,30 @@ proyecto_blueprint = Blueprint('proyecto', __name__)
 @proyecto_blueprint.route('/proyectos', methods=['POST'])
 def crear_proyecto():
     data = request.json
+
+    TIPOS_PROYECTO_VALIDOS = [
+        "ventana corrediza", "puerta plegable", "puerta batiente", "ventana fija"
+    ]
+    TIPOS_VIDRIO_VALIDOS = [
+        "vidrio templado de 6mm", "vidrio templado de 8mm",
+        "vidrio laminado de 6mm", "doble acristalamiento de 18mm"
+    ]
+    TIPOS_ALUMINIO_VALIDOS = [
+        "aluminio schuco 50", "aluminio exlabesa serie 500",
+        "aluminio technal frente plano", "aluminio cortizo 4200"
+    ]
+
+    errores = []
+    if data['tipo'] not in TIPOS_PROYECTO_VALIDOS:
+        errores.append(f"Tipo de proyecto inválido: '{data['tipo']}'")
+    if data['tipo_vidrio'] not in TIPOS_VIDRIO_VALIDOS:
+        errores.append(f"Tipo de vidrio inválido: '{data['tipo_vidrio']}'")
+    if data['tipo_aluminio'] not in TIPOS_ALUMINIO_VALIDOS:
+        errores.append(f"Tipo de aluminio inválido: '{data['tipo_aluminio']}'")
+
+    if errores:
+        return jsonify({"error": "Datos inválidos", "detalles": errores}), 400
+
     try:
         nuevo = Proyecto(
             tipo=data['tipo'],
@@ -25,6 +49,7 @@ def crear_proyecto():
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
+
 
 @proyecto_blueprint.route('/proyectos/<int:id>/materiales', methods=['GET'])
 def ver_materiales(id):

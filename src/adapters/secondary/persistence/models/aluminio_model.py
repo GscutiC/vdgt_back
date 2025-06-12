@@ -11,6 +11,7 @@ class AluminioDetalle(Base):
     descripcion = Column(String)
     longitud = Column(Float)
     cantidad = Column(Integer)
+    tipo = Column(String, nullable=True) 
     proyecto = relationship("Proyecto", backref="aluminios")
 
     def to_dict(self):
@@ -20,5 +21,6 @@ class AluminioDetalle(Base):
             "codigo": self.codigo,
             "descripcion": self.descripcion,
             "longitud": self.longitud,
-            "cantidad": self.cantidad
+            "cantidad": self.cantidad,
+            "tipo": self.tipo
         }

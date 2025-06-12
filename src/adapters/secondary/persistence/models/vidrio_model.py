@@ -12,6 +12,7 @@ class VidrioDetalle(Base):
     alto = Column(Float)
     cantidad = Column(Integer)
     area = Column(Float)
+    tipo = Column(String, nullable=True) 
     proyecto = relationship("Proyecto", backref="vidrios")
 
 
@@ -23,5 +24,6 @@ class VidrioDetalle(Base):
             "ancho": self.ancho,
             "alto": self.alto,
             "cantidad": self.cantidad,
-            "area": self.area
+            "area": self.area,
+            "tipo": self.tipo
         }

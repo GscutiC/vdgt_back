@@ -11,6 +11,8 @@ class CalculadoraMateriales:
         self.unidades = proyecto.unidades
         self.ancho = self._convertir_a_cm(proyecto.ancho, proyecto.unidad_medida)
         self.alto = self._convertir_a_cm(proyecto.alto, proyecto.unidad_medida)
+        self.tipo_vidrio = proyecto.tipo_vidrio.lower()
+        self.tipo_aluminio = proyecto.tipo_aluminio.lower()
 
     def _convertir_a_cm(self, valor, unidad):
         return valor if unidad == "cm" else valor / 10  # mm a cm
@@ -20,11 +22,11 @@ class CalculadoraMateriales:
 
         if tipo == "ventana corrediza":
             return self._ventana_corrediza()
-        elif tipo == "ventana pegable":
-            return self._ventana_pegable()
+        elif tipo == "puerta plegable":
+            return self._puerta_plegable()
         elif tipo == "puerta batiente":
             return self._puerta_batiente()
-        elif tipo == "ventana fijo":
+        elif tipo == "ventana fija":
             return self._fijo()
         else:
             raise ValueError(f"Tipo de proyecto no soportado: {self.proyecto.tipo}")
@@ -40,7 +42,8 @@ class CalculadoraMateriales:
             ancho=ancho_hoja,
             alto=alto_hoja,
             cantidad=self.unidades * 2,
-            area=round(area_vidrio, 2)
+            area=round(area_vidrio, 2),
+            tipo=self.tipo_vidrio
         )
 
         aluminio = AluminioDetalle(
@@ -48,20 +51,21 @@ class CalculadoraMateriales:
             codigo="5221",
             descripcion="Perfil vertical",
             longitud=alto_hoja,
-            cantidad=self.unidades * 2
+            cantidad=self.unidades * 2,
+            tipo=self.tipo_aluminio
         )
 
-        
         return [vidrio], [aluminio]
 
-    def _ventana_pegable(self):
+    def _puerta_plegable(self):
         vidrio = VidrioDetalle(
             proyecto_id=self.proyecto.id,
             descripcion="Vidrio abatible",
             ancho=self.ancho - 2,
             alto=self.alto - 2,
             cantidad=self.unidades,
-            area=round(((self.ancho - 2) * (self.alto - 2)) / 900, 2)
+            area=round(((self.ancho - 2) * (self.alto - 2)) / 900, 2),
+            tipo=self.tipo_vidrio
         )
 
         aluminio = AluminioDetalle(
@@ -69,10 +73,10 @@ class CalculadoraMateriales:
             codigo="3210",
             descripcion="Marco abatible",
             longitud=self.ancho + self.alto,
-            cantidad=self.unidades * 2
+            cantidad=self.unidades * 2,
+            tipo=self.tipo_aluminio
         )
 
-      
         return [vidrio], [aluminio]
 
     def _puerta_batiente(self):
@@ -82,7 +86,8 @@ class CalculadoraMateriales:
             ancho=self.ancho - 3,
             alto=self.alto - 3,
             cantidad=self.unidades,
-            area=round(((self.ancho - 3) * (self.alto - 3)) / 900, 2)
+            area=round(((self.ancho - 3) * (self.alto - 3)) / 900, 2),
+            tipo=self.tipo_vidrio
         )
 
         aluminio = AluminioDetalle(
@@ -90,11 +95,11 @@ class CalculadoraMateriales:
             codigo="7965",
             descripcion="Marco puerta",
             longitud=self.ancho + self.alto,
-            cantidad=self.unidades * 3
+            cantidad=self.unidades * 3,
+            tipo=self.tipo_aluminio
         )
 
-       
-        return [vidrio],[aluminio]
+        return [vidrio], [aluminio]
 
     def _fijo(self):
         vidrio = VidrioDetalle(
@@ -103,7 +108,8 @@ class CalculadoraMateriales:
             ancho=self.ancho,
             alto=self.alto,
             cantidad=self.unidades,
-            area=round((self.ancho * self.alto) / 900, 2)
+            area=round((self.ancho * self.alto) / 900, 2),
+            tipo=self.tipo_vidrio
         )
 
         aluminio = AluminioDetalle(
@@ -111,10 +117,8 @@ class CalculadoraMateriales:
             codigo="3004",
             descripcion="Marco fijo",
             longitud=self.ancho + self.alto,
-            cantidad=self.unidades * 2
+            cantidad=self.unidades * 2,
+            tipo=self.tipo_aluminio
         )
 
-       
-        return [vidrio],[aluminio]
-
-  
+        return [vidrio], [aluminio]

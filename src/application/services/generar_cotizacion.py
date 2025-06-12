@@ -1,8 +1,21 @@
 from src.adapters.secondary.persistence.models.vidrio_model import VidrioDetalle
 from src.adapters.secondary.persistence.models.aluminio_model import AluminioDetalle
 
-PRECIO_VIDRIO_PIE2 = 4  # dólares por pie²
 LONGITUD_BARRA = 600  # cm
+
+PRECIOS_VIDRIO = {
+    "vidrio templado de 6mm": 5.5,
+    "vidrio templado de 8mm": 6.5,
+    "vidrio laminado 6mm": 7.0,
+    "doble acristalamiento 18mm": 8.5,
+}
+
+PRECIOS_ALUMINIO = {
+    "aluminio schuco 50": 60,
+    "aluminio exlabesa serie 500": 55,
+    "aluminio technal frente plano": 58,
+    "aluminio cortizo 4200": 62,
+}
 
 class GeneradorCotizacion:
 
@@ -11,11 +24,13 @@ class GeneradorCotizacion:
         self.aluminios = aluminios
 
     def generar(self):
-        total_vidrio = sum((v.area * PRECIO_VIDRIO_PIE2) for v in self.vidrios)
+        total_vidrio = sum(
+            (v.area * self._precio_vidrio(v.tipo)) for v in self.vidrios
+        )
 
         total_aluminio = 0
         for a in self.aluminios:
-            precio_barra = self._precio_por_codigo(a.codigo)
+            precio_barra = self._precio_aluminio(a.tipo)
             costo_por_corte = (a.longitud / LONGITUD_BARRA) * precio_barra
             total_aluminio += costo_por_corte * a.cantidad
 
@@ -34,30 +49,13 @@ class GeneradorCotizacion:
             "total": round(total, 2)
         }
 
-    def _precio_por_codigo(self, codigo):
-        precios = {
-            "5221": 36,
-            "3210": 40,
-            "7965": 30,
-            "3004": 46,
-            "8463": 55,
-            "9116": 40,
-            "8220": 60
-        }
-        return precios.get(codigo, 40)
+    def _precio_vidrio(self, tipo):
+        return PRECIOS_VIDRIO.get(tipo.lower(), 6.0)
+
+    def _precio_aluminio(self, tipo):
+        return PRECIOS_ALUMINIO.get(tipo.lower(), 55)
 
     def _otros_costos_fijos(self):
-        # Puedes migrar esto luego a una tabla de "CostosFijos"
         return sum([
-            2.07,  # seguro
-            20,    # empaques
-            1.04,  # escuadras
-            4.8,   # tornillos
-            3.6,   # taquetes
-            3,     # brocas
-            2,     # remaches
-            20,    # transporte
-            20,    # instalación
-            35,    # mano de obra
-            20     # limpieza
+            2.07, 20, 1.04, 4.8, 3.6, 3, 2, 20, 20, 35, 20
         ])
